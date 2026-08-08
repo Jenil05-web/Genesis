@@ -21,3 +21,7 @@ Quality Checker later verifies the plan actually stuck to that context (didn't i
 - [x] Ingested 4 real manuals (FEMA CPG 101, NDMA flood/earthquake/cyclone) — 1911 chunks
 - Notes: fixed initial bug — first chunking approach cut words mid-way (raw character slicing); switched to sentence-boundary splitting
 
+### Agents (src/agents/)
+- [x] response_planner.py — RAG-grounded 3-phase plan via GPT-4o-mini
+- [x] image_analyzer.py + tools/vision_tool.py — handles URL, local file, and no-image cases
+- Notes: grounded field in response_planner is self-reported, not trustworthy — real check comes in quality_checker.py
