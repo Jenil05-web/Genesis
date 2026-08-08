@@ -1,5 +1,15 @@
-from pathlib import Path
+ # This file turns our 4 PDFs into ChromaDB's stored knowledge.
+# 4 PDFs → broken into small overlapping paragraphs → each paragraph tagged by disaster type → each paragraph converted to a searchable vector → saved.
+
+
+"""This file handles the "Data Ingestion" part of a RAG (Retrieval-Augmented Generation) system.
+ It takes raw files (like PDFs), breaks them down, and stores them in ChromaDB (a vector database) 
+ so that they can be easily searched later to answer questions."""
+
+
+from pathlib import Path # this is used to 
 from pypdf import PdfReader
+import re
 
 from src.rag.chroma_client import get_protocol_collection
 
@@ -20,13 +30,21 @@ def read_file(path: Path) -> str:
 
 
 def split_into_chunks(text: str, size: int = CHUNK_SIZE, overlap: int = OVERLAP) -> list[str]:
-    """Cuts one long string into small overlapping pieces, so each piece is searchable on its own."""
-    chunks, start = [], 0
-    while start < len(text):
-        end = start + size
-        chunks.append(text[start:end].strip())
-        start = end - overlap
-    return [c for c in chunks if c]
+    """Splits text into chunks on sentence boundaries, so words never get cut mid-way."""
+    sentences = re.split(r"(?<=[.!?])\s+", text)
+
+    chunks, current = [], ""
+    for sentence in sentences:
+        if len(current) + len(sentence) <= size:
+            current += " " + sentence
+        else:
+            if current.strip():
+                chunks.append(current.strip())
+            current = sentence
+    if current.strip():
+        chunks.append(current.strip())
+
+    return chunks
 
 
 def guess_disaster_type(filename: str) -> str:
