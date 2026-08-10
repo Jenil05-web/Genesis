@@ -25,3 +25,9 @@ Quality Checker later verifies the plan actually stuck to that context (didn't i
 - [x] response_planner.py — RAG-grounded 3-phase plan via GPT-4o-mini
 - [x] image_analyzer.py + tools/vision_tool.py — handles URL, local file, and no-image cases
 - Notes: grounded field in response_planner is self-reported, not trustworthy — real check comes in quality_checker.py
+
+### src/tools/copernicus_tool.py
+- [x] list_activations(disaster_type, limit) — real CEMS activations feed, any category
+- [x] download_activation_map_image(code) — downloads ZIP, extracts GeoTIFF, converts to PNG
+- [x] Fixed nodata/NaN bug causing blank images
+- Limitation: CEMS rasters are often SAR (radar), not optical — vision LLM can't reliably read damage from raw radar backscatter. Documented, not solved.

@@ -1,5 +1,5 @@
 from src.tools.vision_tool import analyze_image
-
+"""Uses our vision tool from /tools folder which we have made"""
 
 def check_image(image_path_or_url: str = None) -> dict:
     """Runs image analysis if an image was given. If not, returns empty findings instead of crashing."""

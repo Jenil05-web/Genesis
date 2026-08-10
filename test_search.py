@@ -1,9 +1,4 @@
-from src.agents.response_planner import make_response_plan
-from src.agents.quality_checker import check_plan
+from src.agents.alert_monitor import check_incoming
 
-plan = make_response_plan(
-    situation="City flood, water rising fast in Zone A, hundreds trapped",
-    disaster_type="flood",
-)
-result = check_plan(plan, situation="City flood, water rising fast in Zone A, hundreds trapped")
-print(result)
+print(check_incoming(source="dataset", limit=3))
+print(check_incoming(source="gdelt", query="flood", limit=3))

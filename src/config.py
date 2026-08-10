@@ -12,10 +12,6 @@ class Settings(BaseSettings):
     # Weather
     WEATHER_API_KEY : str = ""
 
-    # SMS
-    SMS_PROVIDER_API_KEY : str = ""
-    SMS_DRY_RUN : bool = True
-
     # Storage
     CHROMA_PERSIST_DIR: str = "./data/chroma"
     DATABASE_URL: str = "sqlite:///./data/genesis.db"
