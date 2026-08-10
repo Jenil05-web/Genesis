@@ -3,16 +3,19 @@ from openai import OpenAI
 
 from src.config import settings
 from src.rag.search_knowledge_base import search_protocols
+from src.tools.maps_tool import geocode
+from src.tools.weather_tool import get_weather
 
 client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
-PLAN_PROMPT= """You are a disaster response planner. Using ONLY the protocol context below,
+PLAN_PROMPT = """You are a disaster response planner. Using ONLY the protocol context below,
 draft a 3-phase response plan for this situation. If the context doesn't cover
 something, say so instead of inventing it.
 
 Situation: {situation}
 Alert info: {alert_info}
 Image findings: {image_findings}
+Current weather: {weather_info}
 
 Protocol context:
 {context}
@@ -25,16 +28,24 @@ Return ONLY JSON matching this schema:
   "grounded": true or false
 }}"""
 
-def make_response_plan(situation:str, disaster_type:str, alert_info:str = "", image_findings:str = "")->dict:
-    """Retrieves relevant protocols, then asks the LLM to draft a grounded 3-phase plan."""
-
+def make_response_plan(situation: str, disaster_type: str, alert_info: str = "",
+                        image_findings: str = "", location_hint: str = None) -> dict:
+    """Retrieves relevant protocols + real weather, then drafts a grounded 3-phase plan."""
     context_chunks = search_protocols(situation, disaster_type=disaster_type)
     context_text = "\n\n".join(context_chunks)
 
+    weather_info = "unavailable"
+    if location_hint:
+        geo = geocode(location_hint)
+        if geo["found"]:
+            weather = get_weather(geo["lat"], geo["lon"])
+            weather_info = f"{weather['temperature_c']}°C, {weather['precipitation_mm']}mm precipitation, {weather['wind_speed_kmh']}km/h wind"
+
     prompt = PLAN_PROMPT.format(
-        situation = situation,
-        alert_info = alert_info  or "none provided",
+        situation=situation,
+        alert_info=alert_info or "none provided",
         image_findings=image_findings or "none provided",
+        weather_info=weather_info,
         context=context_text,
     )
 

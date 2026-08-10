@@ -17,15 +17,16 @@ def image_node(state:GenesisState)-> GenesisState:
     return state
 
 
-def planner_node(state: GenesisState)-> GenesisState:
+def planner_node(state: GenesisState) -> GenesisState:
     disaster_type = state["alert_info"].get("disaster_type", "general")
     state["response_plan"] = make_response_plan(
         situation=state["situation"],
-        disaster_type= disaster_type,
+        disaster_type=disaster_type,
         alert_info=str(state["alert_info"]),
         image_findings=str(state["image_findings"]),
+        location_hint=state["alert_info"].get("location_hint"),
     )
-    return  state
+    return state
 
 def checker_node(state: GenesisState) -> GenesisState:
     state["retry_count"] += 1
@@ -34,7 +35,11 @@ def checker_node(state: GenesisState) -> GenesisState:
 
 
 def executor_node(state: GenesisState) -> GenesisState:
-    state["execution_result"] = run_actions(state["response_plan"], state["approved"])
+    state["execution_result"] = run_actions(
+        state["response_plan"],
+        state["approved"],
+        location_hint=state["alert_info"].get("location_hint"),
+    )
     return state
 
 

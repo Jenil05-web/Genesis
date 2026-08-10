@@ -31,3 +31,8 @@ Quality Checker later verifies the plan actually stuck to that context (didn't i
 - [x] download_activation_map_image(code) — downloads ZIP, extracts GeoTIFF, converts to PNG
 - [x] Fixed nodata/NaN bug causing blank images
 - Limitation: CEMS rasters are often SAR (radar), not optical — vision LLM can't reliably read damage from raw radar backscatter. Documented, not solved.
+
+### Alert Monitor ingestion sources
+- [x] dataset_tool.py — Kaggle/HF disaster-tweets replay (dev/eval)
+- [x] rss_tool.py (self-built) — live news RSS feed, replaced GDELT due to strict rate limits
+- Notes: GDELT dropped in favor of custom RSS solution; same normalized shape maintained

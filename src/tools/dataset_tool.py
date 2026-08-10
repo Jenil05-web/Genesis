@@ -11,7 +11,7 @@ def load_sample_messages(n: int = 5)-> list[dict]:
         _dataset = load_dataset("venetis/disaster_tweets")["train"]
 
 
-    rows = _dataset.select(range(n))
+    rows = _dataset.shuffle().select(range(n))
     return [
         {
             "text": row["text"],

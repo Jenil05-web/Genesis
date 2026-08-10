@@ -1,4 +1,6 @@
 import requests
+import time
+
 
 def geocode(address: str) -> dict:
     """Converts an address/place name to lat/lon via OpenStreetMap Nominatim """
@@ -20,3 +22,41 @@ def get_route(start: tuple, end: tuple) -> dict:
     response.raise_for_status()
     route = response.json()["routes"][0]
     return {"distance_km": route["distance"] / 1000, "duration_min": route["duration"] / 60}
+
+def find_nearby_hospitals(lat: float, lon: float, radius_km: int = 20, limit: int = 5, max_retries: int = 3) -> list[dict]:
+    """Queries Overpass API for real hospitals near any coordinate. Retries on timeout."""
+    radius_m = radius_km * 1000
+    query = f"""
+    [out:json];
+    node["amenity"="hospital"](around:{radius_m},{lat},{lon});
+    out;
+    """
+    headers = {"User-Agent": "genesis-ai-disaster-response"}
+
+    for attempt in range(max_retries):
+        try:
+            response = requests.post(
+                "https://overpass-api.de/api/interpreter",
+                data=query, headers=headers, timeout=30,
+            )
+            response.raise_for_status()
+            elements = response.json()["elements"][:limit]
+            return [
+                {"name": e.get("tags", {}).get("name", "Unnamed hospital"), "lat": e["lat"], "lon": e["lon"]}
+                for e in elements
+            ]
+        except requests.exceptions.HTTPError:
+            wait = 2 ** attempt
+            time.sleep(wait)
+
+    return []  
+
+def find_nearest_shelter(lat: float, lon: float) -> dict:
+    """Finds real nearby hospitals for any location, routes to each, returns the closest."""
+    hospitals = find_nearby_hospitals(lat, lon)
+    best = None
+    for h in hospitals:
+        route = get_route((lat, lon), (h["lat"], h["lon"]))
+        if best is None or route["distance_km"] < best["distance_km"]:
+            best = {**h, **route}
+    return best
