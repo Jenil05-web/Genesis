@@ -7,6 +7,7 @@ from src.agents.image_analyzer import check_image
 from src.agents.response_planner import make_response_plan
 from src.agents.quality_checker import check_plan
 from src.agents.action_executor import run_actions
+from src.tools.maps_tool import geocode
 
 def alert_node(state:GenesisState)-> GenesisState:
     state["alert_info"] = check_alert(state["situation"])
@@ -19,12 +20,21 @@ def image_node(state:GenesisState)-> GenesisState:
 
 def planner_node(state: GenesisState) -> GenesisState:
     disaster_type = state["alert_info"].get("disaster_type", "general")
+    location_hint = state["alert_info"].get("location_hint")
+
+    coords = None
+    if location_hint:
+        geo = geocode(location_hint)
+        if geo["found"]:
+            coords = {"lat": geo["lat"], "lon": geo["lon"]}
+    state["location_coords"] = coords
+
     state["response_plan"] = make_response_plan(
         situation=state["situation"],
         disaster_type=disaster_type,
         alert_info=str(state["alert_info"]),
         image_findings=str(state["image_findings"]),
-        location_hint=state["alert_info"].get("location_hint"),
+        location_hint=location_hint,
     )
     return state
 

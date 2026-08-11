@@ -10,5 +10,6 @@ class GenesisState(TypedDict):
     quality_result: dict
     execution_result: dict
 
+    location_coords: Optional[dict]
     approved: Optional[bool]
     retry_count: int

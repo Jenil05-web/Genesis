@@ -1,5 +1,8 @@
-from src.tools.maps_tool import geocode, find_nearest_shelter
+from src.db.session import get_session
+from src.db.models import Incident
+from sqlmodel import select
 
-geo = geocode("Assam, India")
-print(geo)
-print(find_nearest_shelter(geo["lat"], geo["lon"]))
+session = next(get_session())
+incidents = session.exec(select(Incident)).all()
+for i in incidents:
+    print(i.thread_id, i.situation, i.approved)
