@@ -15,6 +15,10 @@ TRIAGE_PROMPT = """Classify this message for disaster response. Return ONLY JSON
   "reason": "one short sentence"
 }
 
+For location_hint, extract the MOST SPECIFIC location mentioned (street, neighborhood,
+landmark, city) rather than just a state or country name. If only a broad region is
+mentioned, use that, but prefer specificity whenever the text contains it.
+
 Message: "{text}"
 """
 

@@ -1,0 +1,57 @@
+<svg width="1200" height="300" viewBox="0 0 1200 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Genesis — Autonomous Disaster Response and Recovery Orchestrator">
+  <rect width="1200" height="300" fill="#0B1220"/>
+
+  <g stroke="#22304A" stroke-width="1" fill="none" opacity="0.7">
+    <path d="M780,36 C900,8 1045,58 1082,148 C1112,222 1042,270 940,258"/>
+    <path d="M762,66 C872,48 992,88 1022,158 C1046,214 990,250 908,240"/>
+    <path d="M748,96 C842,86 940,112 964,166 C984,206 946,230 886,224"/>
+    <path d="M738,124 C816,118 894,138 914,174 C930,200 900,216 858,212"/>
+  </g>
+
+  <g stroke="#2A3550" stroke-width="1">
+    <line x1="40" y1="0" x2="40" y2="10"/><line x1="100" y1="0" x2="100" y2="10"/>
+    <line x1="160" y1="0" x2="160" y2="10"/><line x1="220" y1="0" x2="220" y2="10"/>
+    <line x1="280" y1="0" x2="280" y2="10"/><line x1="340" y1="0" x2="340" y2="10"/>
+    <line x1="400" y1="0" x2="400" y2="10"/><line x1="460" y1="0" x2="460" y2="10"/>
+    <line x1="520" y1="0" x2="520" y2="10"/><line x1="580" y1="0" x2="580" y2="10"/>
+    <line x1="640" y1="0" x2="640" y2="10"/><line x1="700" y1="0" x2="700" y2="10"/>
+    <line x1="760" y1="0" x2="760" y2="10"/><line x1="820" y1="0" x2="820" y2="10"/>
+    <line x1="880" y1="0" x2="880" y2="10"/><line x1="940" y1="0" x2="940" y2="10"/>
+    <line x1="1000" y1="0" x2="1000" y2="10"/><line x1="1060" y1="0" x2="1060" y2="10"/>
+    <line x1="1120" y1="0" x2="1120" y2="10"/><line x1="1160" y1="0" x2="1160" y2="10"/>
+  </g>
+  <g stroke="#2A3550" stroke-width="1">
+    <line x1="40" y1="300" x2="40" y2="290"/><line x1="160" y1="300" x2="160" y2="290"/>
+    <line x1="280" y1="300" x2="280" y2="290"/><line x1="400" y1="300" x2="400" y2="290"/>
+    <line x1="520" y1="300" x2="520" y2="290"/><line x1="640" y1="300" x2="640" y2="290"/>
+    <line x1="760" y1="300" x2="760" y2="290"/><line x1="880" y1="300" x2="880" y2="290"/>
+    <line x1="1000" y1="300" x2="1000" y2="290"/><line x1="1120" y1="300" x2="1120" y2="290"/>
+  </g>
+  <rect x="0.5" y="0.5" width="1199" height="299" fill="none" stroke="#22304A" stroke-width="1"/>
+
+  <g fill="#5B6785" font-family="IBM Plex Mono, Consolas, monospace" font-size="10" letter-spacing="1">
+    <text x="40" y="24">26.40°N</text>
+    <text x="280" y="24">93.25°E</text>
+    <text x="520" y="24">19.07°N</text>
+    <text x="760" y="24">72.87°E</text>
+    <text x="1000" y="24">GRID·05</text>
+  </g>
+
+  <text x="60" y="128" font-family="Space Grotesk, Arial, sans-serif" font-size="62" font-weight="700" fill="#E8ECF4" letter-spacing="0.5">GENESIS</text>
+  <rect x="61" y="144" width="230" height="4" fill="#F5A623"/>
+  <text x="60" y="177" font-family="IBM Plex Mono, Consolas, monospace" font-size="14" fill="#8A93AC" letter-spacing="2">AUTONOMOUS DISASTER RESPONSE &amp; RECOVERY ORCHESTRATOR</text>
+
+  <g font-family="IBM Plex Mono, Consolas, monospace" font-size="12" letter-spacing="0.5">
+    <rect x="60" y="212" width="140" height="30" rx="3" fill="#141C2E" stroke="#2A3550"/>
+    <circle cx="78" cy="227" r="4" fill="#F5A623"/>
+    <text x="90" y="231" fill="#E8ECF4">AGENTS·05</text>
+
+    <rect x="212" y="212" width="216" height="30" rx="3" fill="#141C2E" stroke="#2A3550"/>
+    <circle cx="230" cy="227" r="4" fill="#E5484D"/>
+    <text x="242" y="231" fill="#E8ECF4">HUMAN-APPROVAL GATED</text>
+
+    <rect x="440" y="212" width="168" height="30" rx="3" fill="#141C2E" stroke="#2A3550"/>
+    <circle cx="458" cy="227" r="4" fill="#3FB27F"/>
+    <text x="470" y="231" fill="#E8ECF4">RAG-GROUNDED</text>
+  </g>
+</svg>

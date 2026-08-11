@@ -35,21 +35,21 @@ def planner_node(state: GenesisState) -> GenesisState:
         alert_info=str(state["alert_info"]),
         image_findings=str(state["image_findings"]),
         location_hint=location_hint,
+        previous_issues=state.get("previous_issues"),
     )
     return state
 
 def checker_node(state: GenesisState) -> GenesisState:
     state["retry_count"] += 1
     state["quality_result"] = check_plan(state["response_plan"], state["situation"])
+    state["previous_issues"] = state["quality_result"].get("issues") if not state["quality_result"]["passed"] else None
     return state
 
 
 def executor_node(state: GenesisState) -> GenesisState:
-    state["execution_result"] = run_actions(
-        state["response_plan"],
-        state["approved"],
-        location_hint=state["alert_info"].get("location_hint"),
-    )
+    result = run_actions(state["response_plan"], state["approved"], location_hint=state["alert_info"].get("location_hint"))
+    result["quality_warning"] = not state["quality_result"]["passed"]
+    state["execution_result"] = result
     return state
 
 

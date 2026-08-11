@@ -15,6 +15,7 @@ class IncidentResponse(BaseModel):
     quality_result: dict
     retry_count: int
     awaiting_approval: bool
+    location_coords: Optional[dict] = None
 
 
 class ApprovalRequest(BaseModel):

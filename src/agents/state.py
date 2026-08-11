@@ -13,3 +13,4 @@ class GenesisState(TypedDict):
     location_coords: Optional[dict]
     approved: Optional[bool]
     retry_count: int
+    previous_issues: Optional[list]

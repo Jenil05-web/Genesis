@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Genesis AI — Real-time disaster response orchestration and emergency operations dashboard." />
+  <title>Genesis AI — Emergency Operations Center</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-left">
+      <div class="logo">
+        <div class="logo-icon">
+          <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <polygon points="16,2 30,28 2,28" fill="none" stroke="url(#logoGrad)" stroke-width="2.5" stroke-linejoin="round"/>
+            <line x1="16" y1="10" x2="16" y2="20" stroke="url(#logoGrad)" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="16" cy="24" r="1.5" fill="url(#logoGrad)"/>
+            <defs>
+              <linearGradient id="logoGrad" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#ff4d4d"/>
+                <stop offset="100%" stop-color="#ff8c00"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <div>
+          <span class="logo-title">Genesis AI</span>
+          <span class="logo-sub">Emergency Operations Center</span>
+        </div>
+      </div>
+    </div>
+    <div class="header-center">
+      <div class="status-bar">
+        <div class="status-dot" id="apiStatusDot"></div>
+        <span id="apiStatusText">Connecting to API...</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="time-display" id="timeDisplay"></div>
+    </div>
+  </header>
+
+  <!-- MAIN LAYOUT -->
+  <main class="main">
+
+    <!-- LEFT PANEL: Input + Submit -->
+    <aside class="panel panel-left">
+      <div class="panel-header">
+        <svg class="panel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        New Incident Report
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="situationInput">Situation Description</label>
+        <textarea
+          id="situationInput"
+          class="form-textarea"
+          rows="5"
+          placeholder="e.g. Massive flooding reported in downtown Assam, India. Multiple roads blocked, people trapped on rooftops..."
+        ></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="imageInput">Image URL (optional)</label>
+        <input
+          id="imageInput"
+          class="form-input"
+          type="text"
+          placeholder="https://example.com/disaster-image.jpg"
+        />
+      </div>
+
+      <button class="btn btn-primary" id="runBtn" onclick="runIncident()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><polygon points="5,3 19,12 5,21"/></svg>
+        Run AI Pipeline
+      </button>
+
+      <!-- PIPELINE STATUS -->
+      <div class="pipeline-status" id="pipelineStatus" style="display:none;">
+        <div class="pipeline-label">Pipeline Progress</div>
+        <div class="pipeline-steps">
+          <div class="pipeline-step" id="step-alert">
+            <div class="step-dot"></div>
+            <span>Alert Classification</span>
+          </div>
+          <div class="pipeline-step" id="step-image">
+            <div class="step-dot"></div>
+            <span>Image Analysis</span>
+          </div>
+          <div class="pipeline-step" id="step-plan">
+            <div class="step-dot"></div>
+            <span>Response Planning</span>
+          </div>
+          <div class="pipeline-step" id="step-quality">
+            <div class="step-dot"></div>
+            <span>Quality Check</span>
+          </div>
+          <div class="pipeline-step" id="step-approval">
+            <div class="step-dot"></div>
+            <span>Awaiting Approval</span>
+          </div>
+          <div class="pipeline-step" id="step-execute">
+            <div class="step-dot"></div>
+            <span>Dispatching Actions</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- APPROVAL PANEL -->
+      <div class="approval-box" id="approvalBox" style="display:none;">
+        <div class="approval-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          Human Approval Required
+        </div>
+        <p class="approval-desc">The AI pipeline has generated a response plan. Review the details and confirm dispatch.</p>
+        <div class="approval-buttons">
+          <button class="btn btn-approve" onclick="approveIncident(true)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><polyline points="20,6 9,17 4,12"/></svg>
+            Approve &amp; Dispatch
+          </button>
+          <button class="btn btn-reject" onclick="approveIncident(false)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            Reject Plan
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- CENTER PANEL: Results -->
+    <section class="panel panel-center" id="centerPanel">
+      <!-- EMPTY STATE -->
+      <div class="empty-state" id="emptyState">
+        <div class="empty-icon">
+          <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="32" cy="32" r="28" stroke="rgba(255,255,255,0.05)" stroke-width="2"/>
+            <path d="M32 14 L32 36" stroke="url(#emptyGrad)" stroke-width="3" stroke-linecap="round"/>
+            <circle cx="32" cy="46" r="2.5" fill="url(#emptyGrad)"/>
+            <path d="M14 50 L50 50" stroke="rgba(255,255,255,0.08)" stroke-width="1.5"/>
+            <defs>
+              <linearGradient id="emptyGrad" x1="0" y1="0" x2="0" y2="64" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#ff4d4d" stop-opacity="0.6"/>
+                <stop offset="100%" stop-color="#ff8c00" stop-opacity="0.3"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <h2>No Active Incident</h2>
+        <p>Enter a situation description on the left and click <strong>Run AI Pipeline</strong> to begin an emergency response analysis.</p>
+      </div>
+
+      <!-- RESULTS (hidden until response arrives) -->
+      <div id="resultsContainer" style="display:none;">
+
+        <!-- ALERT CARD -->
+        <div class="result-card" id="alertCard">
+          <div class="card-header">
+            <div class="card-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              Alert Classification
+            </div>
+            <div class="badge" id="alertBadge"></div>
+          </div>
+          <div class="card-body">
+            <div class="info-grid">
+              <div class="info-item">
+                <span class="info-label">Disaster Type</span>
+                <span class="info-value" id="disasterType">—</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Severity</span>
+                <span class="info-value severity-badge" id="severityBadge">—</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Actionable SOS</span>
+                <span class="info-value" id="isSos">—</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Location Hint</span>
+                <span class="info-value" id="locationHint">—</span>
+              </div>
+            </div>
+            <div class="info-reason">
+              <span class="info-label">AI Reasoning</span>
+              <p id="alertReason" class="reasoning-text">—</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- IMAGE FINDINGS CARD -->
+        <div class="result-card" id="imageCard" style="display:none;">
+          <div class="card-header">
+            <div class="card-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg>
+              Image Analysis
+            </div>
+            <div class="badge badge-info">Aerial Scan</div>
+          </div>
+          <div class="card-body">
+            <div class="info-grid">
+              <div class="info-item">
+                <span class="info-label">Flooded Zones</span>
+                <span class="info-value" id="imgFlooded">—</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Blocked Roads</span>
+                <span class="info-value" id="imgRoads">—</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Collapsed Structures</span>
+                <span class="info-value" id="imgStructures">—</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Severity Estimate</span>
+                <span class="info-value severity-badge" id="imgSeverity">—</span>
+              </div>
+            </div>
+            <div class="info-reason">
+              <span class="info-label">AI Observations</span>
+              <p id="imgNotes" class="reasoning-text">—</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- RESPONSE PLAN CARD -->
+        <div class="result-card" id="planCard" style="display:none;">
+          <div class="card-header">
+            <div class="card-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+              Response Plan
+            </div>
+            <div class="badge badge-plan">AI Generated</div>
+          </div>
+          <div class="card-body">
+            <div class="phases">
+              <div class="phase phase-immediate">
+                <div class="phase-header">
+                  <span class="phase-dot phase-dot-red"></span>
+                  Immediate (0–24 hrs)
+                </div>
+                <ul class="phase-list" id="immediateList"></ul>
+              </div>
+              <div class="phase phase-short">
+                <div class="phase-header">
+                  <span class="phase-dot phase-dot-orange"></span>
+                  Short Term (1–7 days)
+                </div>
+                <ul class="phase-list" id="shortTermList"></ul>
+              </div>
+              <div class="phase phase-recovery">
+                <div class="phase-header">
+                  <span class="phase-dot phase-dot-blue"></span>
+                  Recovery (1–4 weeks)
+                </div>
+                <ul class="phase-list" id="recoveryList"></ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- QUALITY CHECK CARD -->
+        <div class="result-card" id="qualityCard" style="display:none;">
+          <div class="card-header">
+            <div class="card-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              Quality Assurance
+            </div>
+            <div class="badge" id="qualityBadge"></div>
+          </div>
+          <div class="card-body">
+            <div class="info-grid">
+              <div class="info-item">
+                <span class="info-label">QA Status</span>
+                <span class="info-value" id="qaStatus">—</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Plan Retries</span>
+                <span class="info-value" id="qaRetries">—</span>
+              </div>
+            </div>
+            <div id="qaIssuesWrap" style="display:none;">
+              <span class="info-label">Issues Detected</span>
+              <ul class="issues-list" id="qaIssuesList"></ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- EXECUTION RESULT CARD -->
+        <div class="result-card" id="executionCard" style="display:none;">
+          <div class="card-header">
+            <div class="card-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+              Execution Log
+            </div>
+            <div class="badge" id="execBadge"></div>
+          </div>
+          <div class="card-body">
+            <div class="exec-log" id="execLog"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT PANEL: Map + Stats -->
+    <aside class="panel panel-right">
+      <div class="panel-header">
+        <svg class="panel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        Incident Location
+      </div>
+      <div class="map-placeholder" id="mapBox">
+        <div class="map-empty" id="mapEmpty">
+          <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" width="40" height="40">
+            <path d="M24 4C16.27 4 10 10.27 10 18C10 29 24 44 24 44C24 44 38 29 38 18C38 10.27 31.73 4 24 4Z" stroke="rgba(255,255,255,0.15)" stroke-width="2"/>
+            <circle cx="24" cy="18" r="5" stroke="rgba(255,255,255,0.15)" stroke-width="2"/>
+          </svg>
+          <p>Location will appear after the AI extracts coordinates from the incident report.</p>
+        </div>
+        <div id="mapContent" style="display:none;">
+          <div class="coord-display">
+            <div class="coord-item">
+              <span class="coord-label">Latitude</span>
+              <span class="coord-value" id="coordLat">—</span>
+            </div>
+            <div class="coord-item">
+              <span class="coord-label">Longitude</span>
+              <span class="coord-value" id="coordLon">—</span>
+            </div>
+          </div>
+          <div id="leafletMap" style="height:260px; border-radius: 8px; overflow:hidden; margin-top:12px;"></div>
+        </div>
+      </div>
+
+      <div class="panel-header" style="margin-top:20px;">
+        <svg class="panel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22,12 18,12 15,21 9,3 6,12 2,12"/></svg>
+        Session Stats
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value" id="statIncidents">0</div>
+          <div class="stat-label">Incidents Run</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="statApproved">0</div>
+          <div class="stat-label">Approved</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="statRejected">0</div>
+          <div class="stat-label">Rejected</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="statAvgTime">—</div>
+          <div class="stat-label">Avg. Response</div>
+        </div>
+      </div>
+
+      <!-- RECENT INCIDENTS LOG -->
+      <div class="panel-header" style="margin-top:20px;">
+        <svg class="panel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+        Incident History
+      </div>
+      <div class="history-list" id="historyList">
+        <div class="history-empty">No incidents this session yet.</div>
+      </div>
+    </aside>
+
+  </main>
+
+  <!-- TOAST NOTIFICATION -->
+  <div class="toast" id="toast"></div>
+
+  <!-- LEAFLET FOR MAP -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

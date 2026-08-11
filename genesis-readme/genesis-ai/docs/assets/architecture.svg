@@ -1,0 +1,75 @@
+<svg width="900" height="700" viewBox="0 0 900 700" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Genesis agent pipeline architecture">
+  <defs>
+    <marker id="arrow-amber" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,0 L8,4 L0,8 Z" fill="#F5A623"/>
+    </marker>
+    <marker id="arrow-coral" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,0 L8,4 L0,8 Z" fill="#E5484D"/>
+    </marker>
+  </defs>
+
+  <rect width="900" height="700" fill="#0B1220"/>
+
+  <!-- Alert Monitor -->
+  <rect x="60" y="40" width="340" height="72" rx="4" fill="#141C2E" stroke="#2A3550"/>
+  <g stroke="#2A3550" stroke-width="1.5">
+    <path d="M60,50 L60,40 L70,40"/>
+    <path d="M400,102 L400,112 L390,112"/>
+  </g>
+  <text x="78" y="72" font-family="Space Grotesk, Arial, sans-serif" font-size="17" font-weight="700" fill="#E8ECF4">Alert Monitor</text>
+  <text x="78" y="94" font-family="IBM Plex Mono, Consolas, monospace" font-size="11" fill="#8A93AC">social text · live news · SOS triage</text>
+
+  <!-- Image Analyzer -->
+  <rect x="500" y="40" width="340" height="72" rx="4" fill="#141C2E" stroke="#2A3550"/>
+  <g stroke="#2A3550" stroke-width="1.5">
+    <path d="M500,50 L500,40 L510,40"/>
+    <path d="M840,102 L840,112 L830,112"/>
+  </g>
+  <text x="518" y="72" font-family="Space Grotesk, Arial, sans-serif" font-size="17" font-weight="700" fill="#E8ECF4">Image Analyzer</text>
+  <text x="518" y="94" font-family="IBM Plex Mono, Consolas, monospace" font-size="11" fill="#8A93AC">satellite · drone · GPT-4o-mini vision</text>
+
+  <line x1="230" y1="112" x2="330" y2="168" stroke="#F5A623" stroke-width="1.5" marker-end="url(#arrow-amber)"/>
+  <line x1="670" y1="112" x2="570" y2="168" stroke="#F5A623" stroke-width="1.5" marker-end="url(#arrow-amber)"/>
+
+  <!-- Response Planner -->
+  <rect x="280" y="172" width="340" height="72" rx="4" fill="#141C2E" stroke="#2A3550"/>
+  <g stroke="#2A3550" stroke-width="1.5">
+    <path d="M280,182 L280,172 L290,172"/>
+    <path d="M620,234 L620,244 L610,244"/>
+  </g>
+  <text x="298" y="204" font-family="Space Grotesk, Arial, sans-serif" font-size="17" font-weight="700" fill="#E8ECF4">Response Planner</text>
+  <text x="298" y="226" font-family="IBM Plex Mono, Consolas, monospace" font-size="11" fill="#8A93AC">RAG (ChromaDB) + live weather · 3-phase plan</text>
+
+  <line x1="450" y1="244" x2="450" y2="300" stroke="#F5A623" stroke-width="1.5" marker-end="url(#arrow-amber)"/>
+
+  <!-- Quality Checker -->
+  <rect x="280" y="304" width="340" height="72" rx="4" fill="#141C2E" stroke="#2A3550"/>
+  <g stroke="#2A3550" stroke-width="1.5">
+    <path d="M280,314 L280,304 L290,304"/>
+    <path d="M620,366 L620,376 L610,376"/>
+  </g>
+  <text x="298" y="336" font-family="Space Grotesk, Arial, sans-serif" font-size="17" font-weight="700" fill="#E8ECF4">Quality Checker</text>
+  <text x="298" y="358" font-family="IBM Plex Mono, Consolas, monospace" font-size="11" fill="#8A93AC">independent grounding check · not self-graded</text>
+
+  <path d="M622,320 C 700,320 700,220 622,220" fill="none" stroke="#E5484D" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#arrow-coral)"/>
+  <text x="712" y="274" font-family="IBM Plex Mono, Consolas, monospace" font-size="11" fill="#E5484D" text-anchor="middle">issues found</text>
+  <text x="712" y="288" font-family="IBM Plex Mono, Consolas, monospace" font-size="11" fill="#E5484D" text-anchor="middle">→ replan w/ feedback</text>
+
+  <line x1="450" y1="376" x2="450" y2="432" stroke="#F5A623" stroke-width="1.5" marker-end="url(#arrow-amber)"/>
+
+  <!-- Human Approval Gate -->
+  <rect x="280" y="436" width="340" height="72" rx="4" fill="#1A1508" stroke="#F5A623" stroke-width="1.5"/>
+  <text x="298" y="468" font-family="Space Grotesk, Arial, sans-serif" font-size="17" font-weight="700" fill="#F5A623">Human Approval Gate</text>
+  <text x="298" y="490" font-family="IBM Plex Mono, Consolas, monospace" font-size="11" fill="#C99248">graph pauses here · nothing dispatches without it</text>
+
+  <line x1="450" y1="508" x2="450" y2="564" stroke="#F5A623" stroke-width="1.5" marker-end="url(#arrow-amber)"/>
+
+  <!-- Action Executor -->
+  <rect x="280" y="568" width="340" height="72" rx="4" fill="#141C2E" stroke="#2A3550"/>
+  <g stroke="#2A3550" stroke-width="1.5">
+    <path d="M280,578 L280,568 L290,568"/>
+    <path d="M620,630 L620,640 L610,640"/>
+  </g>
+  <text x="298" y="600" font-family="Space Grotesk, Arial, sans-serif" font-size="17" font-weight="700" fill="#E8ECF4">Action Executor</text>
+  <text x="298" y="622" font-family="IBM Plex Mono, Consolas, monospace" font-size="11" fill="#8A93AC">logs dispatch · nearest-hospital lookup</text>
+</svg>

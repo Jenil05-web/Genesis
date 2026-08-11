@@ -1,0 +1,19 @@
+<svg width="1200" height="150" viewBox="0 0 1200 150" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Genesis footer">
+  <rect width="1200" height="150" fill="#0B1220"/>
+  <g stroke="#22304A" stroke-width="1" fill="none" opacity="0.6">
+    <path d="M90,132 C300,104 500,140 700,112 C900,88 1000,122 1150,104"/>
+  </g>
+  <line x1="0" y1="0.5" x2="1200" y2="0.5" stroke="#2A3550"/>
+  <g stroke="#2A3550" stroke-width="1">
+    <line x1="40" y1="0" x2="40" y2="8"/><line x1="160" y1="0" x2="160" y2="8"/>
+    <line x1="280" y1="0" x2="280" y2="8"/><line x1="400" y1="0" x2="400" y2="8"/>
+    <line x1="520" y1="0" x2="520" y2="8"/><line x1="640" y1="0" x2="640" y2="8"/>
+    <line x1="760" y1="0" x2="760" y2="8"/><line x1="880" y1="0" x2="880" y2="8"/>
+    <line x1="1000" y1="0" x2="1000" y2="8"/><line x1="1120" y1="0" x2="1120" y2="8"/>
+  </g>
+
+  <text x="60" y="58" font-family="Space Grotesk, Arial, sans-serif" font-size="22" font-weight="700" fill="#E8ECF4" letter-spacing="0.5">GENESIS</text>
+  <text x="60" y="84" font-family="IBM Plex Mono, Consolas, monospace" font-size="12" fill="#8A93AC" letter-spacing="1">REAL DATA · REAL AGENTS · REAL GUARDRAILS</text>
+  <text x="60" y="116" font-family="IBM Plex Mono, Consolas, monospace" font-size="11" fill="#4B5573" letter-spacing="0.5">LAST RESOLVED COORDINATE · 26.4074°N 93.2551°E · ASSAM, IN</text>
+  <text x="760" y="116" font-family="IBM Plex Mono, Consolas, monospace" font-size="11" fill="#4B5573" letter-spacing="0.5">LANGGRAPH · CHROMADB · GPT-4O-MINI</text>
+</svg>

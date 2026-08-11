@@ -29,7 +29,8 @@ Return ONLY JSON matching this schema:
 }}"""
 
 def make_response_plan(situation: str, disaster_type: str, alert_info: str = "",
-                        image_findings: str = "", location_hint: str = None) -> dict:
+                        image_findings: str = "", location_hint: str = None,
+                        previous_issues: list = None) -> dict:
     """Retrieves relevant protocols + real weather, then drafts a grounded 3-phase plan."""
     context_chunks = search_protocols(situation, disaster_type=disaster_type)
     context_text = "\n\n".join(context_chunks)
@@ -41,13 +42,17 @@ def make_response_plan(situation: str, disaster_type: str, alert_info: str = "",
             weather = get_weather(geo["lat"], geo["lon"])
             weather_info = f"{weather['temperature_c']}°C, {weather['precipitation_mm']}mm precipitation, {weather['wind_speed_kmh']}km/h wind"
 
+    feedback_note = ""
+    if previous_issues:
+        feedback_note = f"\n\nIMPORTANT: A previous version of this plan had these issues — fix them: {previous_issues}"
+
     prompt = PLAN_PROMPT.format(
         situation=situation,
         alert_info=alert_info or "none provided",
         image_findings=image_findings or "none provided",
         weather_info=weather_info,
         context=context_text,
-    )
+    ) + feedback_note
 
     response = client.chat.completions.create(
         model = "gpt-4o-mini",

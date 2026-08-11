@@ -34,6 +34,7 @@ def create_incident(payload: IncidentCreateRequest):
         quality_result=result["quality_result"],
         retry_count=result["retry_count"],
         awaiting_approval=True,
+        location_coords=result.get("location_coords"),
     )
 
 @router.post("/incidents/{thread_id}/approve", response_model=ExecutionResponse)
