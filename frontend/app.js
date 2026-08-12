@@ -2,7 +2,10 @@
    GENESIS  —  App Logic v3
 ════════════════════════════════════════════ */
 
-const API = 'http://127.0.0.1:8000';
+// In production, window.GENESIS_API_URL is set by a <script> block in index.html
+// injected at build/deploy time. Locally it falls back to the dev server.
+const API = window.GENESIS_API_URL || 'http://127.0.0.1:8000';
+
 
 const S = {
   threadId:  null,
