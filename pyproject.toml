@@ -1,0 +1,4 @@
+[tool.pytest.ini_options]
+# Run from the project root: pytest
+testpaths = ["tests"]
+addopts   = "-v --tb=short"

@@ -1,0 +1,9 @@
+llm_env/
+__pycache__/
+*.pyc
+.git/
+notebooks/
+data/chroma/
+data/raw/
+*.db
+.env

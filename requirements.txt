@@ -1,0 +1,16 @@
+openai
+chromadb
+pypdf
+rasterio
+pillow
+numpy
+requests
+datasets
+langgraph
+fastapi
+uvicorn[standard]
+pydantic-settings
+sqlmodel
+streamlit
+pandas
+feedparser

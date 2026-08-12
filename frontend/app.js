@@ -1,95 +1,146 @@
-/* ========================
-   GENESIS AI — APP LOGIC
-   Emergency Operations Center
-   ======================== */
+/* ════════════════════════════════════════════
+   GENESIS  —  App Logic v3
+════════════════════════════════════════════ */
 
-const API_URL = 'http://127.0.0.1:8000';
+const API = 'http://127.0.0.1:8000';
 
-// ── State ──────────────────────────────────────────────────────────────────
-const state = {
-  currentThreadId: null,
-  incidentStartTime: null,
-  stats: { incidents: 0, approved: 0, rejected: 0, totalMs: 0 },
-  history: [],
-  leafletMap: null,
-  leafletMarker: null,
+const S = {
+  threadId:  null,
+  startTime: null,
+  map:       null,
+  stats: { total: 0, approved: 0, rejected: 0, totalMs: 0 },
 };
 
-// ── On load ────────────────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
-  updateClock();
-  setInterval(updateClock, 1000);
-  checkApiStatus();
-  setInterval(checkApiStatus, 15000);
+// ── Boot ───────────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  bootSequence();
+  startClock();
+  checkApi();
+  setInterval(checkApi, 15_000);
+
+  // Char counter
+  const ta = document.getElementById('situationInput');
+  const cc = document.getElementById('charCounter');
+  ta.addEventListener('input', () => {
+    cc.textContent = `${ta.value.length} characters`;
+  });
 });
 
-function updateClock() {
-  const el = document.getElementById('timeDisplay');
-  if (!el) return;
-  el.textContent = new Date().toLocaleTimeString('en-US', {
-    hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit',
-  });
+function bootSequence() {
+  const loader = document.getElementById('pageLoader');
+  const header = document.getElementById('appHeader');
+  const msg    = document.getElementById('loaderMsg');
+  const steps  = ['Initializing…', 'Loading response protocols…', 'Ready.'];
+  let i = 0;
+  const iv = setInterval(() => { if (i < steps.length) msg.textContent = steps[i++]; }, 520);
+  setTimeout(() => {
+    clearInterval(iv);
+    loader.classList.add('out');
+    header.classList.add('visible');
+  }, 1750);
 }
 
-// ── API health check ───────────────────────────────────────────────────────
-async function checkApiStatus() {
-  const dot  = document.getElementById('apiStatusDot');
-  const text = document.getElementById('apiStatusText');
+function startClock() {
+  const el = document.getElementById('timeDisplay');
+  const tick = () => {
+    el.textContent = new Date().toLocaleTimeString('en-US', { hour12: false });
+  };
+  tick();
+  setInterval(tick, 1000);
+}
+
+// ── API health ─────────────────────────────────────────────────────────
+async function checkApi() {
+  const dot   = document.getElementById('apiDot');
+  const label = document.getElementById('apiLabel');
   try {
-    const res = await fetch(`${API_URL}/health`, { signal: AbortSignal.timeout(3000) });
-    if (res.ok) {
-      dot.className  = 'status-dot online';
-      text.textContent = 'API Online — Ready';
-    } else { throw new Error('non-2xx'); }
+    const r = await fetch(`${API}/health`, { signal: AbortSignal.timeout(3000) });
+    if (r.ok) {
+      dot.className   = 'api-dot online';
+      label.textContent = 'API Online';
+    } else throw 0;
   } catch {
-    dot.className  = 'status-dot offline';
-    text.textContent = 'API Offline';
+    dot.className   = 'api-dot offline';
+    label.textContent = 'API Offline';
   }
 }
 
-// ── Toast ──────────────────────────────────────────────────────────────────
-function showToast(msg, durationMs = 3000) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), durationMs);
+// ── Toast ──────────────────────────────────────────────────────────────
+function toast(msg, ms = 3200) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), ms);
 }
 
-// ── Pipeline step helpers ──────────────────────────────────────────────────
-function setStep(id, status) {            // status: '' | 'active' | 'done'
+// ── Pipeline helpers ───────────────────────────────────────────────────
+const STEPS = ['alert', 'image', 'plan', 'quality', 'approval', 'execute'];
+
+const PROC_LABELS = {
+  alert:    'Classifying alert signal…',
+  image:    'Analyzing imagery…',
+  plan:     'Drafting response plan…',
+  quality:  'Running quality checks…',
+  approval: 'Awaiting authorization…',
+  execute:  'Dispatching field actions…',
+};
+
+function setNode(id, state) {    // '' | 'active' | 'done'
   const el = document.getElementById(`step-${id}`);
-  if (el) el.className = `pipeline-step ${status}`;
+  if (el) el.className = `pp-node ${state}`;
 }
 
 function resetPipeline() {
-  ['alert','image','plan','quality','approval','execute'].forEach(s => setStep(s, ''));
+  STEPS.forEach(s => setNode(s, ''));
+  setFill(0);
+  const dot = document.getElementById('ppDot');
+  if (dot) dot.className = 'pp-dot';
 }
 
-// ── Run Incident ───────────────────────────────────────────────────────────
+function setFill(pct) {
+  const el = document.getElementById('trackFill');
+  if (el) el.style.width = `${pct}%`;
+}
+
+function setProcMsg(text) {
+  const el = document.getElementById('procStep');
+  if (!el) return;
+  el.style.opacity = '0';
+  setTimeout(() => { el.textContent = text; el.style.opacity = '1'; }, 160);
+}
+
+// ── Run Incident ───────────────────────────────────────────────────────
 async function runIncident() {
   const situation = document.getElementById('situationInput').value.trim();
-  if (!situation) { showToast('⚠️  Please enter a situation description.'); return; }
+  if (!situation) { toast('Enter a situation description first.'); return; }
 
   const imageUrl = document.getElementById('imageInput').value.trim() || null;
 
-  // Reset UI
-  document.getElementById('emptyState').style.display     = 'none';
-  document.getElementById('resultsContainer').style.display = 'none';
-  document.getElementById('approvalBox').style.display      = 'none';
-  document.getElementById('executionCard').style.display    = 'none';
+  // Reset
+  hide('emptyState');
+  hide('resultsContainer');
+  hide('approvalBox');
+  hide('executionCard');
+
+  show('pipelineStatus');
+  show('processingOverlay');
+  resetPipeline();
+
+  const ppDot = document.getElementById('ppDot');
+  if (ppDot) ppDot.className = 'pp-dot running';
 
   const btn = document.getElementById('runBtn');
   btn.disabled = true;
-  btn.innerHTML = `<div class="spinner"></div> Running AI Pipeline…`;
+  btn.innerHTML = `<div class="btn-spin"></div> Running…`;
 
-  document.getElementById('pipelineStatus').style.display = 'block';
-  resetPipeline();
-  setStep('alert', 'active');
-
-  state.incidentStartTime = Date.now();
+  S.startTime = Date.now();
 
   try {
-    const res = await fetch(`${API_URL}/incidents`, {
+    setNode('alert', 'active');
+    setFill(8);
+    setProcMsg(PROC_LABELS.alert);
+
+    const res = await fetch(`${API}/incidents`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ situation, image_path: imageUrl }),
@@ -97,66 +148,77 @@ async function runIncident() {
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({ detail: res.statusText }));
-      throw new Error(err.detail || 'API error');
+      throw new Error(err.detail || 'Request failed');
     }
 
     const data = await res.json();
-    state.currentThreadId = data.thread_id;
+    S.threadId = data.thread_id;
 
-    // Animate pipeline steps completing
-    await animatePipelineComplete(data);
+    // Animate steps completing
+    const stepSeq = [
+      ['alert', 'image', 18, PROC_LABELS.image],
+      ['image', 'plan',  36, PROC_LABELS.plan],
+      ['plan',  'quality', 55, PROC_LABELS.quality],
+      ['quality', null,  72, null],
+    ];
 
-    // Populate result cards
-    populateAlertCard(data.alert_info);
-    populateImageCard(data.image_findings, imageUrl);
-    populatePlanCard(data.response_plan);
-    populateQualityCard(data.quality_result, data.retry_count);
+    for (const [done, next, pct, nextLabel] of stepSeq) {
+      await sleep(300);
+      setNode(done, 'done');
+      if (next) { setNode(next, 'active'); setProcMsg(nextLabel); }
+      setFill(pct);
+    }
+
+    // Hide processing overlay
+    hide('processingOverlay');
+
+    // Populate cards
+    populateAlert(data.alert_info);
+    populateImage(data.image_findings, imageUrl);
+    populatePlan(data.response_plan);
+    populateQuality(data.quality_result, data.retry_count);
     populateMap(data.location_coords);
 
-    document.getElementById('resultsContainer').style.display = 'block';
-    document.getElementById('approvalBox').style.display      = 'block';
+    show('resultsContainer');
+    show('approvalBox');
 
-    setStep('approval', 'active');
+    setNode('approval', 'active');
+    setFill(85);
 
-    state.stats.incidents++;
+    S.stats.total++;
     updateStats();
-    showToast('✅ Pipeline complete — awaiting your approval');
+    toast('Pipeline complete — review and authorize dispatch.');
 
   } catch (err) {
-    showToast(`❌ Error: ${err.message}`, 5000);
+    hide('processingOverlay');
     resetPipeline();
-    document.getElementById('emptyState').style.display = 'block';
+    show('emptyState');
+    toast(`Error: ${err.message}`, 5000);
   } finally {
     btn.disabled = false;
-    btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><polygon points="5,3 19,12 5,21"/></svg> Run AI Pipeline`;
+    btn.innerHTML = `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polygon points="4,2 16,10 4,18"/></svg> Run Pipeline`;
   }
 }
 
-async function animatePipelineComplete(data) {
-  const steps = ['alert','image','plan','quality'];
-  for (const s of steps) {
-    await sleep(350);
-    setStep(s, 'done');
-  }
-}
+const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
-
-// ── Approve / Reject ───────────────────────────────────────────────────────
+// ── Authorize / Reject ─────────────────────────────────────────────────
 async function approveIncident(approved) {
-  if (!state.currentThreadId) return;
+  if (!S.threadId) return;
 
-  const approveBtn = document.querySelector('.btn-approve');
-  const rejectBtn  = document.querySelector('.btn-reject');
-  approveBtn.disabled = true;
-  rejectBtn.disabled  = true;
-  approveBtn.innerHTML = `<div class="spinner"></div> Processing…`;
+  const aBtn = document.getElementById('approveBtn');
+  const rBtn = document.getElementById('rejectBtn');
+  aBtn.disabled = rBtn.disabled = true;
+  aBtn.innerHTML = `<div class="btn-spin" style="border-top-color:var(--green);width:11px;height:11px;"></div> Processing…`;
 
-  setStep('approval', 'done');
-  setStep('execute', 'active');
+  setNode('approval', 'done');
+  setNode('execute', 'active');
+  setFill(92);
+  show('processingOverlay');
+  setProcMsg(PROC_LABELS.execute);
 
   try {
-    const res = await fetch(`${API_URL}/incidents/${state.currentThreadId}/approve`, {
+    const res = await fetch(`${API}/incidents/${S.threadId}/approve`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ approved }),
@@ -164,159 +226,140 @@ async function approveIncident(approved) {
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({ detail: res.statusText }));
-      throw new Error(err.detail || 'API error');
+      throw new Error(err.detail || 'Request failed');
     }
 
     const data = await res.json();
 
-    setStep('execute', 'done');
-    populateExecutionCard(data.execution_result, approved);
+    hide('processingOverlay');
+    setNode('execute', 'done');
+    setFill(100);
 
-    document.getElementById('approvalBox').style.display = 'none';
+    const ppDot = document.getElementById('ppDot');
+    if (ppDot) ppDot.className = 'pp-dot';
 
-    // Update stats
-    const elapsed = Date.now() - state.incidentStartTime;
-    if (approved) { state.stats.approved++; }
-    else          { state.stats.rejected++; }
-    state.stats.totalMs += elapsed;
+    populateExecution(data.execution_result, approved);
+    hide('approvalBox');
 
-    // Add to history
-    addToHistory(
+    const elapsed = Date.now() - S.startTime;
+    if (approved) S.stats.approved++; else S.stats.rejected++;
+    S.stats.totalMs += elapsed;
+
+    addLogItem(
       document.getElementById('situationInput').value.trim(),
       approved,
-      elapsed,
-      state.currentThreadId,
     );
-
     updateStats();
-    showToast(approved ? '🚀 Actions dispatched!' : '🚫 Plan rejected.', 4000);
+
+    toast(approved ? 'Actions authorized and dispatched.' : 'Plan rejected.');
 
   } catch (err) {
-    showToast(`❌ Approval failed: ${err.message}`, 5000);
-    setStep('execute', '');
+    hide('processingOverlay');
+    setNode('execute', '');
+    toast(`Error: ${err.message}`, 5000);
   } finally {
-    approveBtn.disabled = false;
-    rejectBtn.disabled  = false;
-    approveBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><polyline points="20,6 9,17 4,12"/></svg> Approve &amp; Dispatch`;
+    aBtn.disabled = rBtn.disabled = false;
+    aBtn.innerHTML = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><polyline points="14,4 6.5,12 2,8"/></svg> Authorize`;
   }
 }
 
-// ── Populate Cards ─────────────────────────────────────────────────────────
-function populateAlertCard(info) {
+// ── Populate cards ─────────────────────────────────────────────────────
+function populateAlert(info) {
   if (!info || !Object.keys(info).length) return;
 
-  const isSos      = info.is_actionable_sos;
-  const severity   = (info.severity || 'unknown').toLowerCase();
-  const disType    = (info.disaster_type || 'unknown').replace('_', ' ');
-  const locHint    = info.location_hint || 'Not detected';
-  const reason     = info.reason || '—';
+  const isSos    = info.is_actionable_sos;
+  const severity = (info.severity || 'unknown').toLowerCase();
+  const type     = cap((info.disaster_type || 'unknown').replace(/_/g, ' '));
 
-  document.getElementById('disasterType').textContent = capitalize(disType);
-  document.getElementById('locationHint').textContent = locHint;
-  document.getElementById('alertReason').textContent  = reason;
+  setText('disasterType', type);
+  setText('locationHint', info.location_hint || 'Not identified');
+  setText('alertReason',  info.reason || '—');
 
-  // SOS badge
-  const alertBadge = document.getElementById('alertBadge');
-  if (isSos) {
-    alertBadge.textContent  = '🚨 SOS Active';
-    alertBadge.className    = 'badge badge-sos';
-  } else {
-    alertBadge.textContent  = 'Monitoring';
-    alertBadge.className    = 'badge badge-info';
-  }
-
-  // SOS text
   const sosEl = document.getElementById('isSos');
   sosEl.textContent = isSos ? 'Yes — Urgent' : 'No';
   sosEl.style.color = isSos ? 'var(--red)' : 'var(--green)';
 
-  // Severity
   const sevEl = document.getElementById('severityBadge');
-  sevEl.textContent = capitalize(severity);
-  sevEl.className   = `info-value severity-badge severity-${severity}`;
+  sevEl.textContent = cap(severity);
+  sevEl.className = `dc-val sev-${severity}`;
+
+  const badge = document.getElementById('alertBadge');
+  badge.textContent = isSos ? 'SOS Active' : 'Monitoring';
+  badge.className = `dc-badge ${isSos ? 'badge-red' : 'badge-neutral'}`;
 
   show('alertCard');
 }
 
-function populateImageCard(findings, imageUrl) {
+function populateImage(findings, imageUrl) {
   if (!findings || !Object.keys(findings).length) return;
+  if (!findings.severity_estimate && !findings.notes && !imageUrl) return;
 
-  const hasData = findings.severity_estimate || findings.notes;
-  if (!hasData && !imageUrl) return;
+  const fmt = v => v == null ? '—' : v === true ? 'Yes' : v === false ? 'No' : String(v);
+  setText('imgFlooded',    fmt(findings.flooded_zones));
+  setText('imgRoads',      fmt(findings.blocked_roads));
+  setText('imgStructures', fmt(findings.collapsed_structures));
+  setText('imgNotes',      findings.notes || '—');
 
-  const fmt = v => v === null ? '—' : v === true ? '✓ Yes' : v === false ? '✗ No' : String(v);
-
-  document.getElementById('imgFlooded').textContent    = fmt(findings.flooded_zones);
-  document.getElementById('imgRoads').textContent      = fmt(findings.blocked_roads);
-  document.getElementById('imgStructures').textContent = fmt(findings.collapsed_structures);
-  document.getElementById('imgNotes').textContent      = findings.notes || '—';
-
+  const sev = (findings.severity_estimate || 'unknown').toLowerCase();
   const sevEl = document.getElementById('imgSeverity');
-  const sev   = (findings.severity_estimate || 'unknown').toLowerCase();
-  sevEl.textContent = capitalize(sev);
-  sevEl.className   = `info-value severity-badge severity-${sev}`;
+  sevEl.textContent = cap(sev);
+  sevEl.className = `dc-val sev-${sev}`;
 
   show('imageCard');
 }
 
-function populatePlanCard(plan) {
+function populatePlan(plan) {
   if (!plan || !Object.keys(plan).length) return;
 
-  const makeItems = (text) => {
-    if (!text) return [];
-    // Split on numbered items or newlines
-    return text
-      .split(/\n|(?=\d+\.\s)/)
-      .map(s => s.replace(/^\d+\.\s*/, '').trim())
-      .filter(Boolean);
-  };
-
-  const fillList = (listId, items) => {
-    const ul = document.getElementById(listId);
+  const fillList = (id, raw) => {
+    const ul = document.getElementById(id);
     ul.innerHTML = '';
-    items.forEach(item => {
+    const items = raw
+      ? raw.split(/\n|(?=\d+\.\s)/).map(s => s.replace(/^\d+\.\s*/, '').trim()).filter(Boolean)
+      : [];
+    (items.length ? items : ['No actions specified.']).forEach(txt => {
       const li = document.createElement('li');
-      li.textContent = item;
+      li.textContent = txt;
+      if (!items.length) li.style.color = 'var(--t3)';
       ul.appendChild(li);
     });
-    if (!items.length) {
-      const li = document.createElement('li');
-      li.textContent = 'No actions specified.';
-      li.style.color = 'var(--text-muted)';
-      ul.appendChild(li);
-    }
   };
 
-  fillList('immediateList', makeItems(plan.immediate));
-  fillList('shortTermList', makeItems(plan.short_term));
-  fillList('recoveryList',  makeItems(plan.recovery));
-
+  fillList('immediateList', plan.immediate);
+  fillList('shortTermList', plan.short_term);
+  fillList('recoveryList',  plan.recovery);
   show('planCard');
 }
 
-function populateQualityCard(qa, retries) {
+function populateQuality(qa, retries) {
   if (!qa || !Object.keys(qa).length) return;
 
   const passed = qa.passed;
+  setText('qaStatus',  passed ? 'Passed' : 'Failed');
+  setText('qaRetries', String(retries ?? 0));
 
-  document.getElementById('qaRetries').textContent = retries ?? 0;
+  document.getElementById('qaStatus').style.color = passed ? 'var(--green)' : 'var(--amber)';
 
-  const statusEl = document.getElementById('qaStatus');
-  statusEl.textContent = passed ? '✓ Passed' : '⚠ Failed';
-  statusEl.style.color = passed ? 'var(--green)' : 'var(--amber)';
+  const fill  = document.getElementById('qaMeterFill');
+  const label = document.getElementById('qaBarLabel');
+  fill.className = `qa-bar-fill ${passed ? 'pass' : 'fail'}`;
+  label.textContent = passed ? 'All checks passed' : 'Issues detected';
+  setTimeout(() => {
+    fill.style.width = passed ? '100%' : `${Math.max(15, 100 - (retries || 1) * 22)}%`;
+  }, 50);
 
   const badge = document.getElementById('qualityBadge');
-  badge.textContent = passed ? 'QA Passed' : 'QA Failed';
-  badge.className   = `badge ${passed ? 'badge-ok' : 'badge-warn'}`;
+  badge.textContent = passed ? 'Passed' : 'Failed';
+  badge.className = `dc-badge ${passed ? 'badge-green' : 'badge-amber'}`;
 
   const issues = qa.issues || [];
-  if (issues.length > 0) {
+  if (issues.length) {
     const wrap = document.getElementById('qaIssuesWrap');
     const list = document.getElementById('qaIssuesList');
     list.innerHTML = '';
-    issues.forEach(issue => {
+    issues.forEach(iss => {
       const li = document.createElement('li');
-      li.textContent = issue;
+      li.textContent = iss;
       list.appendChild(li);
     });
     wrap.style.display = 'block';
@@ -325,145 +368,175 @@ function populateQualityCard(qa, retries) {
   show('qualityCard');
 }
 
-function populateExecutionCard(execResult, approved) {
-  if (!execResult) return;
+function populateExecution(result, approved) {
+  if (!result) return;
 
-  const logEl  = document.getElementById('execLog');
-  const badge  = document.getElementById('execBadge');
-  logEl.innerHTML = '';
+  const log  = document.getElementById('execLog');
+  const badge = document.getElementById('execBadge');
+  log.innerHTML = '';
 
-  if (!execResult.executed) {
-    const msg = document.createElement('div');
-    msg.className   = 'log-entry log-denied';
-    msg.textContent = execResult.log?.[0] || 'Plan was rejected — no actions taken.';
-    logEl.appendChild(msg);
+  if (!result.executed) {
+    const div = document.createElement('div');
+    div.className = 'dl-denied';
+    div.textContent = result.log?.[0] || 'Plan rejected — no actions dispatched.';
+    log.appendChild(div);
     badge.textContent = 'Rejected';
-    badge.className   = 'badge badge-warn';
+    badge.className = 'dc-badge badge-amber';
   } else {
-    badge.textContent = '✓ Dispatched';
-    badge.className   = 'badge badge-ok';
+    badge.textContent = 'Dispatched';
+    badge.className = 'dc-badge badge-green';
 
-    const entries = execResult.log || [];
-    entries.forEach(entry => {
+    (result.log || []).forEach((entry, i) => {
       const div = document.createElement('div');
-      div.className = 'log-entry log-success';
+      div.className = 'dl-entry';
+      div.style.animationDelay = `${i * 55}ms`;
 
-      const tag = document.createElement('span');
-      tag.className   = `log-phase-tag log-phase-${entry.phase || 'immediate'}`;
-      tag.textContent = (entry.phase || 'action').replace('_', ' ').toUpperCase();
+      const phase = document.createElement('span');
+      phase.className = `dl-phase dl-phase-${entry.phase || 'immediate'}`;
+      phase.textContent = (entry.phase || 'action').replace('_', ' ').toUpperCase();
 
-      const action = document.createElement('span');
-      action.className   = 'log-action';
-      action.textContent = entry.action || entry;
+      const content = document.createElement('div');
+      content.className = 'dl-content';
 
-      const status = document.createElement('span');
-      status.className   = 'log-status';
-      status.textContent = entry.status || 'logged';
+      const action = document.createElement('div');
+      action.className = 'dl-action';
+      action.textContent = entry.action || String(entry);
 
-      div.appendChild(tag);
-      div.appendChild(action);
-      div.appendChild(status);
-      logEl.appendChild(div);
+      const status = document.createElement('div');
+      status.className = 'dl-status';
+      status.textContent = entry.status || 'Logged';
+
+      content.appendChild(action);
+      content.appendChild(status);
+      div.appendChild(phase);
+      div.appendChild(content);
+      log.appendChild(div);
     });
 
-    // Timestamp
-    if (execResult.timestamp) {
+    if (result.timestamp) {
       const ts = document.createElement('div');
-      ts.style.cssText = 'font-size:11px;color:var(--text-muted);margin-top:8px;font-family:JetBrains Mono,monospace;';
-      ts.textContent   = `Dispatched at: ${new Date(execResult.timestamp).toLocaleString()}`;
-      logEl.appendChild(ts);
+      ts.className = 'dl-ts';
+      ts.textContent = `Dispatched ${new Date(result.timestamp).toLocaleString()}`;
+      log.appendChild(ts);
+    }
+
+    if (result.quality_warning) {
+      const warn = document.createElement('div');
+      warn.className = 'qa-warn-banner';
+      warn.innerHTML = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" width="13" height="13"><path d="M8 2L1 14h14L8 2z"/><line x1="8" y1="6" x2="8" y2="9"/><circle cx="8" cy="11.5" r=".7" fill="currentColor"/></svg> Dispatched after retry limit — quality check did not fully pass.`;
+      log.appendChild(warn);
     }
   }
 
   show('executionCard');
 }
 
-// ── Map ────────────────────────────────────────────────────────────────────
+// ── Map ────────────────────────────────────────────────────────────────
 function populateMap(coords) {
-  if (!coords || coords.lat == null || coords.lon == null) return;
+  if (!coords || coords.lat == null) return;
 
-  document.getElementById('coordLat').textContent = coords.lat.toFixed(5);
-  document.getElementById('coordLon').textContent = coords.lon.toFixed(5);
-  document.getElementById('mapEmpty').style.display   = 'none';
-  document.getElementById('mapContent').style.display = 'block';
+  setText('coordLat', coords.lat.toFixed(5));
+  setText('coordLon', coords.lon.toFixed(5));
+  hide('mapEmpty');
+  show('mapContent');
 
-  // Destroy old map if any
-  if (state.leafletMap) {
-    state.leafletMap.remove();
-    state.leafletMap   = null;
-    state.leafletMarker = null;
-  }
+  if (S.map) { S.map.remove(); S.map = null; }
 
-  // Small delay to let DOM show the container
   setTimeout(() => {
     const map = L.map('leafletMap', {
-      center: [coords.lat, coords.lon],
-      zoom: 10,
-      zoomControl: true,
-      scrollWheelZoom: false,
+      center:           [coords.lat, coords.lon],
+      zoom:             11,
+      zoomControl:      true,
+      scrollWheelZoom:  true,     // ← enabled so user can zoom without clicking
+      attributionControl: false,
     });
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors',
-    }).addTo(map);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-    // Custom red marker icon
+    // Precision marker
     const icon = L.divIcon({
       html: `<div style="
-        width:18px;height:18px;
-        background:var(--red);
-        border:3px solid white;
+        width:14px;height:14px;
+        background:#ef4444;
+        border:2px solid #fff;
         border-radius:50%;
-        box-shadow:0 0 10px rgba(255,77,77,0.7);
+        box-shadow:0 0 0 3px rgba(239,68,68,.25),0 2px 8px rgba(0,0,0,.6);
       "></div>`,
       className: '',
-      iconAnchor: [9, 9],
+      iconAnchor: [7, 7],
     });
 
     L.marker([coords.lat, coords.lon], { icon }).addTo(map);
-    state.leafletMap = map;
+
+    // Radius ring — subtle context
+    L.circle([coords.lat, coords.lon], {
+      radius:      4000,
+      color:       'rgba(239,68,68,.25)',
+      fillColor:   'rgba(239,68,68,.04)',
+      fillOpacity: 1,
+      weight:      1,
+    }).addTo(map);
+
+    S.map = map;
   }, 100);
 }
 
-// ── Stats ──────────────────────────────────────────────────────────────────
-function updateStats() {
-  document.getElementById('statIncidents').textContent = state.stats.incidents;
-  document.getElementById('statApproved').textContent  = state.stats.approved;
-  document.getElementById('statRejected').textContent  = state.stats.rejected;
+// ── Phase tabs ─────────────────────────────────────────────────────────
+function switchPhase(id, btn) {
+  document.querySelectorAll('.phase-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.pt-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`phase-${id}`).classList.add('active');
+  btn.classList.add('active');
+}
 
-  if (state.stats.incidents > 0) {
-    const avgSec = Math.round(state.stats.totalMs / state.stats.incidents / 1000);
-    document.getElementById('statAvgTime').textContent = `${avgSec}s`;
+// ── Stats ──────────────────────────────────────────────────────────────
+function updateStats() {
+  countUp('statIncidents', S.stats.total);
+  countUp('statApproved',  S.stats.approved);
+  countUp('statRejected',  S.stats.rejected);
+  if (S.stats.total > 0) {
+    const avg = Math.round(S.stats.totalMs / S.stats.total / 1000);
+    document.getElementById('statAvgTime').textContent = `${avg}s`;
   }
 }
 
-// ── History ────────────────────────────────────────────────────────────────
-function addToHistory(situation, approved, elapsedMs, threadId) {
-  state.history.unshift({ situation, approved, elapsedMs, threadId, time: new Date() });
+function countUp(id, target) {
+  const el   = document.getElementById(id);
+  const from = parseInt(el.textContent) || 0;
+  const t0   = Date.now();
+  const dur  = 500;
+  const tick = () => {
+    const p = Math.min(1, (Date.now() - t0) / dur);
+    el.textContent = Math.round(from + (target - from) * easeOut(p));
+    if (p < 1) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
 
+const easeOut = t => 1 - Math.pow(1 - t, 3);
+
+// ── Log items ──────────────────────────────────────────────────────────
+function addLogItem(situation, approved) {
   const list = document.getElementById('historyList');
-
-  // Remove empty placeholder
-  const empty = list.querySelector('.history-empty');
-  if (empty) empty.remove();
+  const void_ = list.querySelector('.log-void');
+  if (void_) void_.remove();
 
   const item = document.createElement('div');
-  item.className = 'history-item';
+  item.className = 'log-item';
+  const time = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
+
   item.innerHTML = `
-    <div class="history-item-title">${escHtml(situation.slice(0, 60))}${situation.length > 60 ? '…' : ''}</div>
-    <div class="history-item-meta">
-      <span class="badge ${approved ? 'badge-ok' : 'badge-warn'}" style="font-size:10px;padding:2px 7px;">
-        ${approved ? 'Approved' : 'Rejected'}
-      </span>
-      <span class="history-item-time">${new Date().toLocaleTimeString('en-US',{hour12:false,hour:'2-digit',minute:'2-digit'})}</span>
-    </div>
-  `;
+    <div class="log-item-title">${esc(situation.slice(0, 60))}${situation.length > 60 ? '…' : ''}</div>
+    <div class="log-item-meta">
+      <span class="dc-badge ${approved ? 'badge-green' : 'badge-amber'}" style="font-size:9.5px;padding:1px 7px;">${approved ? 'Authorized' : 'Rejected'}</span>
+      <span class="log-item-time">${time}</span>
+    </div>`;
   list.prepend(item);
 }
 
-// ── Utilities ──────────────────────────────────────────────────────────────
-function show(id) { document.getElementById(id).style.display = 'block'; }
-function capitalize(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
-function escHtml(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
+// ── Helpers ────────────────────────────────────────────────────────────
+const show    = id => { const e = document.getElementById(id); if (e) e.style.display = 'block'; };
+const hide    = id => { const e = document.getElementById(id); if (e) e.style.display = 'none'; };
+const setText = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+const cap     = s => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+const esc     = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
