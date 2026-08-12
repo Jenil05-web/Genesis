@@ -1,0 +1,52 @@
+# Environment & secrets
+.env
+*.env
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+*.egg
+build/
+dist/
+.Python
+
+# Virtual environments
+venv/
+env/
+.venv/
+ENV/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Data (allow FAISS indexes and small CSVs, ignore huge files >100MB)
+data/raw/*
+data/processed/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/processed/*.faiss
+!data/processed/*.npy
+!data/processed/*.csv
+
+# Model artifacts (allow pkl files so Render can use them)
+models/*
+!models/.gitkeep
+!models/*.pkl
+
+# Logs
+logs/*
+!logs/.gitkeep
+
+# OS/editor junk
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Pytest / coverage
+.pytest_cache/
+.coverage
+htmlcov/

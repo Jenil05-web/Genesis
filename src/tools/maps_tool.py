@@ -1,5 +1,8 @@
 import requests
-import time
+import logging
+from src.utils.helpers import with_retry
+
+logger = logging.getLogger("genesis")
 
 
 def geocode(address: str) -> dict:
@@ -11,7 +14,9 @@ def geocode(address: str) -> dict:
     response.raise_for_status()
     results = response.json()
     if not results:
+        logger.warning("geocode: no result for %r", address)
         return {"found": False}
+    logger.info("geocode: %r → (%.4f, %.4f)", address, float(results[0]["lat"]), float(results[0]["lon"]))
     return {"found": True, "lat": float(results[0]["lat"]), "lon": float(results[0]["lon"])}
 
 
@@ -23,8 +28,9 @@ def get_route(start: tuple, end: tuple) -> dict:
     route = response.json()["routes"][0]
     return {"distance_km": route["distance"] / 1000, "duration_min": route["duration"] / 60}
 
-def find_nearby_hospitals(lat: float, lon: float, radius_km: int = 20, limit: int = 5, max_retries: int = 3) -> list[dict]:
-    """Queries Overpass API for real hospitals near any coordinate. Retries on timeout."""
+@with_retry(max_attempts=3, delay_seconds=1.0, backoff=2.0, exceptions=(requests.exceptions.RequestException,))
+def find_nearby_hospitals(lat: float, lon: float, radius_km: int = 20, limit: int = 5) -> list[dict]:
+    """Queries Overpass API for real hospitals near any coordinate. Retried automatically on failure."""
     radius_m = radius_km * 1000
     query = f"""
     [out:json];
@@ -32,24 +38,17 @@ def find_nearby_hospitals(lat: float, lon: float, radius_km: int = 20, limit: in
     out;
     """
     headers = {"User-Agent": "genesis-ai-disaster-response"}
-
-    for attempt in range(max_retries):
-        try:
-            response = requests.post(
-                "https://overpass-api.de/api/interpreter",
-                data=query, headers=headers, timeout=30,
-            )
-            response.raise_for_status()
-            elements = response.json()["elements"][:limit]
-            return [
-                {"name": e.get("tags", {}).get("name", "Unnamed hospital"), "lat": e["lat"], "lon": e["lon"]}
-                for e in elements
-            ]
-        except requests.exceptions.HTTPError:
-            wait = 2 ** attempt
-            time.sleep(wait)
-
-    return []  
+    response = requests.post(
+        "https://overpass-api.de/api/interpreter",
+        data=query, headers=headers, timeout=30,
+    )
+    response.raise_for_status()
+    elements = response.json()["elements"][:limit]
+    logger.info("find_nearby_hospitals: found %d hospitals within %dkm of (%.4f, %.4f)", len(elements), radius_km, lat, lon)
+    return [
+        {"name": e.get("tags", {}).get("name", "Unnamed hospital"), "lat": e["lat"], "lon": e["lon"]}
+        for e in elements
+    ]
 
 def find_nearest_shelter(lat: float, lon: float) -> dict:
     """Finds real nearby hospitals for any location, routes to each, returns the closest."""

@@ -1,10 +1,12 @@
-import json
 from openai import OpenAI
 
 from src.config import settings
 from src.rag.search_knowledge_base import search_protocols
 from src.tools.maps_tool import geocode
 from src.tools.weather_tool import get_weather
+from src.utils.helpers import safe_parse_json, normalise_severity
+import logging
+logger = logging.getLogger("genesis")
 
 client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
@@ -61,8 +63,12 @@ def make_response_plan(situation: str, disaster_type: str, alert_info: str = "",
 
     )
 
-    plan = json.loads(response.choices[0].message.content)
+    plan = safe_parse_json(response.choices[0].message.content, fallback={"immediate": "", "short_term": "", "recovery": "", "grounded": False})
     plan["used_context"] = context_chunks
+    # Normalise any severity the planner echoes back so downstream consumers get a canonical value
+    if "severity" in plan:
+        plan["severity"] = normalise_severity(plan["severity"])
+    logger.info("make_response_plan: grounded=%s context_chunks=%d", plan.get("grounded"), len(context_chunks))
     return plan
 
 

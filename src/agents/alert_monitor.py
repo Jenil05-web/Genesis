@@ -1,7 +1,11 @@
-import json
 from openai import OpenAI
 
 from src.config import settings
+from src.utils.helpers import safe_parse_json, truncate, configure_logging
+
+configure_logging()
+import logging
+logger = logging.getLogger("genesis")
 
 client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
@@ -48,4 +52,7 @@ def check_alert(text: str) -> dict:
         response_format={"type": "json_object"},
         messages=[{"role": "user", "content": TRIAGE_PROMPT.replace("{text}", text)}],
     )
-    return json.loads(response.choices[0].message.content)
+    raw = response.choices[0].message.content
+    result = safe_parse_json(raw, fallback={"is_actionable_sos": False, "disaster_type": "none", "severity": "low", "location_hint": None, "reason": "parse error"})
+    logger.info("check_alert: [%s/%s] sos=%s | %s", result.get("disaster_type"), result.get("severity"), result.get("is_actionable_sos"), truncate(text, 80))
+    return result

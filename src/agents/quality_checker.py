@@ -1,7 +1,9 @@
-import json
 from openai import OpenAI
 
 from src.config import settings
+from src.utils.helpers import safe_parse_json
+import logging
+logger = logging.getLogger("genesis")
 
 client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
@@ -46,4 +48,7 @@ def check_plan(plan: dict, situation:str) -> dict:
             ),
         }],
     )
-    return json.loads(response.choices[0].message.content)
+    raw = response.choices[0].message.content
+    result = safe_parse_json(raw, fallback={"passed": False, "issues": ["quality check parse error"]})
+    logger.info("check_plan: passed=%s issues=%d", result.get("passed"), len(result.get("issues", [])))
+    return result

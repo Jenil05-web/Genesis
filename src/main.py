@@ -3,8 +3,12 @@ import json
 from datetime import datetime
 from src.db.session import create_db_and_tables, get_session
 from src.db.models import Incident
-
 from src.agents.graph import app
+from src.utils.helpers import configure_logging, state_summary, flatten_plan_to_text
+
+configure_logging()
+import logging
+logger = logging.getLogger("genesis")
 
 def save_incident(thread_id: str, initial_state: dict, result: dict) -> None:
     incident = Incident(
@@ -43,14 +47,16 @@ def run_incident(situation: str, image_path: str = None) -> None:
     print(f"\n--- Running incident: {thread_id} ---\n")
     result = app.invoke(initial_state, config=config)
 
-    print("Alert classification:", json.dumps(result["alert_info"], indent=2))
+    logger.info("Pipeline complete: %s", state_summary(result))
+
+    print("\nAlert classification:", json.dumps(result["alert_info"], indent=2))
     print("\nImage findings:", json.dumps(result["image_findings"], indent=2))
     print("\nResponse plan:")
-    for phase in ["immediate", "short_term", "recovery"]:
-        print(f"  [{phase}] {result['response_plan'].get(phase, '')}")
-    print(f"\nQuality check: passed={result['quality_result']['passed']}, retries={result['retry_count']}")
-    if result["quality_result"]["issues"]:
-        print("Issues found:", result["quality_result"]["issues"])
+    print(flatten_plan_to_text(result["response_plan"]))
+    print(f"\nQuality check: passed={result['quality_result'].get('passed')}, retries={result['retry_count']}")
+    issues = result["quality_result"].get("issues", [])
+    if issues:
+        print("Issues found:", issues)
 
     answer = input("\nApprove and dispatch this plan? (y/n): ").strip().lower()
     approved = answer == "y"
