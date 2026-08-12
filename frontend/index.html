@@ -487,7 +487,11 @@
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="app.js"></script>
+<script>
+  // Production backend URL — update this if you redeploy the backend to a new URL
+  window.GENESIS_API_URL = 'https://genesis-4ax7.onrender.com';
+</script>
+<script src="app.js"></script>
 </body>
 
 </html>
